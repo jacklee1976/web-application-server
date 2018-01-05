@@ -40,6 +40,8 @@ public class RequestHandler extends Thread {
 		try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
 
+//			HttpRequest httpRequest = new HttpRequest(in);
+
 			String readLine = bufferedReader.readLine();
 			log.debug("request line > {}", readLine);
 
