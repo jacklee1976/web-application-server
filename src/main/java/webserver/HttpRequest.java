@@ -45,9 +45,9 @@ public class HttpRequest {
 			line = bf.readLine();
 		}
 
-		if ("POST".equals(getMethod())) {
+		if (getMethod().isPost()) {
 			String body = readData(bf, Integer.parseInt(headers.get("Content-Length")));
-
+			log.debug("body > {}", body);
 			parameters = HttpRequestUtils.parseQueryString(body);
 		} else {
 			parameters = requestLine.getParameter();

@@ -38,68 +38,36 @@ public class RequestHandler extends Thread {
 			connection.getPort());
 
 		try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+			HttpRequest httpRequest = new HttpRequest(in);
 
-//			HttpRequest httpRequest = new HttpRequest(in);
+			String path = httpRequest.getPath();
+			log.debug("url : {}", path);
 
-			String readLine = bufferedReader.readLine();
-			log.debug("request line > {}", readLine);
-
-			String[] tokens = readLine.split(HTTP_REQUEST_SPLITER);
-			int contentLength = 0;
-
-
-			boolean logined = false;
-			while (!readLine.equals("")) {
-				log.debug("header : {}", readLine);
-
-				readLine = bufferedReader.readLine();
-
-				if (readLine.contains("Content-Length")) {
-					contentLength = getContentLength(readLine);
-				}
-
-				if(readLine.contains("Cookie")){
-					logined = isLogin(readLine);
-				}
-			}
-
-			String url = tokens[1];
-			log.debug("url : {}", url);
-
-			if (url.equals("/user/create")) {
-				String body = IOUtils.readData(bufferedReader, contentLength);
-				log.debug("body : {}", body);
-
-				Map<String, String> stringMap = HttpRequestUtils.parseQueryString(body);
-
-				User user = new User(stringMap.get("userId"), stringMap.get("password"), stringMap.get("name"), stringMap.get("email"));
+			if (path.equals("/user/create")) {
+				User user = new User(httpRequest.getParameter("userId"), httpRequest.getParameter("password"), httpRequest.getParameter("name"), httpRequest.getParameter("email"));
 				log.debug("UserId : {}", user);
 
 				DataBase.addUser(user);
 
 				DataOutputStream dos = new DataOutputStream(out);
 				response302Header(dos, "/index.html");
-			} else if (url.equals("/user/login")) {
-				String body = IOUtils.readData(bufferedReader, contentLength);
-				Map<String, String> stringMap = HttpRequestUtils.parseQueryString(body);
-
-				User user = DataBase.findUserById(stringMap.get("userId"));
+			} else if (path.equals("/user/login")) {
+				User user = DataBase.findUserById(httpRequest.getParameter("userId"));
 
 				if (user == null) {
 					responseResource(out, "/user/login_failed.html");
 					return;
 				}
 
-				if (user.getPassword().equals(stringMap.get("password"))) {
+				if (user.getPassword().equals(httpRequest.getParameter("password"))) {
 					DataOutputStream dos = new DataOutputStream(out);
 					response302LoginSucessHeader(dos);
 
 				} else {
 					responseResource(out, "/user/login_failed.html");
 				}
-			}else if(url.equals("/user/list")) {
-				if (!logined) {
+			}else if(path.equals("/user/list")) {
+				if (!isLogin(httpRequest.getHeader("Cookie"))) {
 					responseResource(out, "/user/login.html");
 				}
 
@@ -122,14 +90,14 @@ public class RequestHandler extends Thread {
 
 				response200Header(dos, body.length);
 				responseBody(dos, body);
-			} else if(url.endsWith(".css")){
+			} else if(path.endsWith(".css")){
 				DataOutputStream dos = new DataOutputStream(out);
-				byte[] body = Files.readAllBytes(new File("./webapp"+ url).toPath());
+				byte[] body = Files.readAllBytes(new File("./webapp"+ path).toPath());
 
 				response200CssHeader(dos, body.length);
 				responseBody(dos, body);
 			} else {
-				responseResource(out, url);
+				responseResource(out, path);
 			}
 		} catch (IOException e) {
 			log.error(e.getMessage());
@@ -137,9 +105,7 @@ public class RequestHandler extends Thread {
 	}
 
 	private boolean isLogin(String readLine) {
-		String[] haderTokens = readLine.split(":");
-		Map<String, String> cookies = HttpRequestUtils.parseCookies(haderTokens[1].trim());
-
+		Map<String, String> cookies = HttpRequestUtils.parseCookies(readLine);
 		String value = cookies.get("logined");
 
 		if(value == null){
@@ -155,12 +121,6 @@ public class RequestHandler extends Thread {
 		byte[] body = Files.readAllBytes(new File("./webapp" + url).toPath());
 		response200Header(dos, body.length);
 		responseBody(dos, body);
-	}
-
-	private int getContentLength(String readLine) {
-		String[] headerTokens = readLine.split(":");
-		return Integer.parseInt(headerTokens[1].trim());
-
 	}
 
 	private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {

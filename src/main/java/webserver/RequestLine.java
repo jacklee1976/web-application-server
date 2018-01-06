@@ -29,7 +29,7 @@ public class RequestLine {
 
 		method = HttpMethod.valueOf(tokens[0]);
 
-		if ("POST".equals(method)) {
+		if (method == HttpMethod.POST) {
 			path = tokens[1];
 			return;
 		}
