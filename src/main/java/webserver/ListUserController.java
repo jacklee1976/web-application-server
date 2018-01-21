@@ -7,6 +7,7 @@ import java.util.Map;
 import db.DataBase;
 import model.User;
 import util.HttpRequestUtils;
+import util.HttpSession;
 
 /**
  * @author zack <zack@nhn.com>
@@ -15,21 +16,20 @@ import util.HttpRequestUtils;
 public class ListUserController extends AbstractController {
 	@Override
 	public void doGet(HttpRequest httpRequest, HttpResponse httpResponse) throws Exception {
-		if (!isLogin(httpRequest.getHeader("Cookie"))) {
+		if (!isLogin(httpRequest.getSession())) {
 			httpResponse.forward("/user/login.html");
 		}
 		httpResponse.forwardBody(makeUserList());
 	}
 
-	private boolean isLogin(String readLine) {
-		Map<String, String> cookies = HttpRequestUtils.parseCookies(readLine);
-		String value = cookies.get("logined");
+	private boolean isLogin(HttpSession httpSession) {
+		Object user = httpSession.getAttribute("user");
 
-		if (value == null) {
+		if (user == null) {
 			return false;
 		}
 
-		return Boolean.parseBoolean(value);
+		return true;
 	}
 
 	private String makeUserList() {

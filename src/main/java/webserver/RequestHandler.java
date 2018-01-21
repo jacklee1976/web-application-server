@@ -3,6 +3,7 @@ package webserver;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,22 +24,26 @@ public class RequestHandler extends Thread {
 			HttpRequest httpRequest = new HttpRequest(in);
 			HttpResponse httpResponse = new HttpResponse(out);
 
+			if (httpRequest.getCookie().getCookie("JSESSIONID") == null) {
+				httpResponse.addHeaders("Set-Cookie", "JSESSIONID=" + UUID.randomUUID());
+			}
+
 			Controller controller = RequestMapping.getController(httpRequest.getPath());
 
-			if(controller == null){
+			if (controller == null) {
 				String path = getDefaultPath(httpRequest.getPath());
 				httpResponse.forward(path);
-			}else {
+			} else {
 				controller.service(httpRequest, httpResponse);
 			}
 
 		} catch (Exception e) {
-			log.error(e.getMessage());
+			log.error("ERROR : {}", e);
 		}
 	}
 
-	private String getDefaultPath(String path){
-		if(path.equals("/")){
+	private String getDefaultPath(String path) {
+		if (path.equals("/")) {
 			return "/index.html";
 		}
 

@@ -10,8 +10,11 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import util.HttpCookie;
 import util.HttpMethod;
 import util.HttpRequestUtils;
+import util.HttpSession;
+import util.HttpSessions;
 
 /**
  * @author zack <zack@nhn.com>
@@ -53,6 +56,14 @@ public class HttpRequest {
 			parameters = requestLine.getParameter();
 		}
 
+	}
+
+	public HttpCookie getCookie(){
+		return new HttpCookie(getHeader("Cookie"));
+	}
+
+	public HttpSession getSession(){
+		return HttpSessions.getSession(getCookie().getCookie("JSESSIONID"));
 	}
 
 	private String readData(BufferedReader br, int contentLength) throws IOException {

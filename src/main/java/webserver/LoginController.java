@@ -20,7 +20,7 @@ public class LoginController extends AbstractController {
 		}
 
 		if (user.getPassword().equals(httpRequest.getParameter("password"))) {
-			httpResponse.addHeaders("Set-Cookie", "logined=true");
+			httpRequest.getSession().setAttributes("user", user);
 			httpResponse.sendRedirect("/index.html");
 		} else {
 			httpResponse.forward("/user/login_failed.html");
